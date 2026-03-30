@@ -6,11 +6,15 @@ const userSchema = new mongoose.Schema(
     fullName: {
       type: String,
       required: true,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true, // 🔥 normalize
+      trim: true,
+      index: true, // 🔥 ensure indexing
     },
     password: {
       type: String,
@@ -20,6 +24,7 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
       default: "",
+      trim: true,
     },
     profilePic: {
       type: String,
@@ -28,14 +33,17 @@ const userSchema = new mongoose.Schema(
     nativeLanguage: {
       type: String,
       default: "",
+      trim: true,
     },
     learningLanguage: {
       type: String,
       default: "",
+      trim: true,
     },
     location: {
       type: String,
       default: "",
+      trim: true,
     },
     isOnboarded: {
       type: Boolean,
@@ -51,6 +59,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// 🔐 Hash password before save
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
@@ -63,9 +72,9 @@ userSchema.pre("save", async function (next) {
   }
 });
 
+// 🔑 Compare password
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  const isPasswordCorrect = await bcrypt.compare(enteredPassword, this.password);
-  return isPasswordCorrect;
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model("User", userSchema);
