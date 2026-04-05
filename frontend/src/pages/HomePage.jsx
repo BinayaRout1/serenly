@@ -17,6 +17,7 @@ import NoFriendsFound from "../components/NoFriendsFound";
 const HomePage = () => {
   const queryClient = useQueryClient();
   const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
+  const [pendingRequestId, setPendingRequestId] = useState(null);
 
   const { data: friends = [], isLoading: loadingFriends } = useQuery({
     queryKey: ["friends"],
@@ -33,9 +34,15 @@ const HomePage = () => {
     queryFn: getOutgoingFriendReqs,
   });
 
-  const { mutate: sendRequestMutation, isPending } = useMutation({
+  const { mutate: sendRequestMutation } = useMutation({
     mutationFn: sendFriendRequest,
+    onMutate: (userId) => {
+      setPendingRequestId(userId);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
+    onSettled: () => {
+      setPendingRequestId(null);
+    },
   });
 
   useEffect(() => {
@@ -100,6 +107,7 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendedUsers.map((user) => {
                 const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
+                const isCurrentRequestPending = pendingRequestId === user._id;
 
                 return (
                   <div
@@ -108,8 +116,14 @@ const HomePage = () => {
                   >
                     <div className="card-body p-5 space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="avatar size-16 rounded-full">
-                          <img src={user.profilePic} alt={user.fullName} />
+                        <div className="avatar">
+                          <div className="size-16 rounded-full overflow-hidden">
+                            <img
+                              src={user.profilePic}
+                              alt={user.fullName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         </div>
 
                         <div>
@@ -143,13 +157,15 @@ const HomePage = () => {
                           hasRequestBeenSent ? "btn-disabled" : "btn-primary"
                         } `}
                         onClick={() => sendRequestMutation(user._id)}
-                        disabled={hasRequestBeenSent || isPending}
+                        disabled={hasRequestBeenSent || isCurrentRequestPending}
                       >
                         {hasRequestBeenSent ? (
                           <>
                             <CheckCircleIcon className="size-4 mr-2" />
                             Request Sent
                           </>
+                        ) : isCurrentRequestPending ? (
+                          <span className="loading loading-spinner loading-sm" />
                         ) : (
                           <>
                             <UserPlusIcon className="size-4 mr-2" />

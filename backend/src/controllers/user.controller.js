@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import { ensureUserAvatar } from "../lib/avatar.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -13,6 +14,8 @@ export async function getRecommendedUsers(req, res) {
         { isOnboarded: true },
       ],
     });
+
+    await Promise.all(recommendedUsers.map((user) => ensureUserAvatar(user)));
     res.status(200).json(recommendedUsers);
   } catch (error) {
     console.error("Error in getRecommendedUsers controller", error.message);
@@ -25,6 +28,8 @@ export async function getMyFriends(req, res) {
     const user = await User.findById(req.user.id)
       .select("friends")
       .populate("friends", "fullName profilePic nativeLanguage learningLanguage");
+
+    await Promise.all(user.friends.map((friend) => ensureUserAvatar(friend)));
 
     res.status(200).json(user.friends);
   } catch (error) {
@@ -126,6 +131,9 @@ export async function getFriendRequests(req, res) {
       status: "accepted",
     }).populate("recipient", "fullName profilePic");
 
+    await Promise.all(incomingReqs.map((request) => ensureUserAvatar(request.sender)));
+    await Promise.all(acceptedReqs.map((request) => ensureUserAvatar(request.recipient)));
+
     res.status(200).json({ incomingReqs, acceptedReqs });
   } catch (error) {
     console.log("Error in getPendingFriendRequests controller", error.message);
@@ -139,6 +147,8 @@ export async function getOutgoingFriendReqs(req, res) {
       sender: req.user.id,
       status: "pending",
     }).populate("recipient", "fullName profilePic nativeLanguage learningLanguage");
+
+    await Promise.all(outgoingRequests.map((request) => ensureUserAvatar(request.recipient)));
 
     res.status(200).json(outgoingRequests);
   } catch (error) {

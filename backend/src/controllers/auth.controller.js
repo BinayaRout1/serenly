@@ -1,6 +1,7 @@
 import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { ensureUserAvatar, getDicebearAvatar, shouldRefreshAvatar } from "../lib/avatar.js";
 
 const generateTokenAndSetCookie = (userId, res) => {
   if (!process.env.JWT_SECRET_KEY) {
@@ -41,14 +42,11 @@ export async function signup(req, res) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    const idx = Math.floor(Math.random() * 100) + 1;
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
-
     const newUser = await User.create({
       email,
       fullName,
       password,
-      profilePic: randomAvatar,
+      profilePic: getDicebearAvatar(email),
     });
 
     try {
@@ -90,6 +88,8 @@ export async function login(req, res) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    await ensureUserAvatar(user);
+
     generateTokenAndSetCookie(user._id, res);
 
     const userResponse = await User.findById(user._id).select("-password");
@@ -123,10 +123,15 @@ export async function onboard(req, res) {
       });
     }
 
+    const profilePic = shouldRefreshAvatar(req.body.profilePic)
+      ? getDicebearAvatar(userId.toString())
+      : req.body.profilePic;
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
         ...req.body,
+        profilePic,
         isOnboarded: true,
       },
       { new: true }
