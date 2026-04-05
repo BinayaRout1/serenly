@@ -17,7 +17,7 @@ const __dirname = path.resolve();
 
 app.use(
   cors({
-    origin: "https://serenly.onrender.com",
+    origin: "https://serenly-app.vercel.app",
     credentials: true,
   })
 );
