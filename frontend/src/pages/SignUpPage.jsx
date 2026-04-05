@@ -43,7 +43,7 @@ const SignUpPage = () => {
             <form onSubmit={handleSignup}>
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-xl font-semibold">Create an Account</h2>
+                  <h2 className="text-xl font-semibold">Create and Account</h2>
                   <p className="text-sm opacity-70">
                     Join Serenly and start your language learning adventure!
                   </p>
