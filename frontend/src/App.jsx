@@ -113,6 +113,10 @@ const App = () => {
             )
           }
         />
+        <Route
+          path="*"
+          element={<Navigate to={!isAuthenticated ? "/login" : isOnboarded ? "/" : "/onboarding"} />}
+        />
       </Routes>
 
       <Toaster />
