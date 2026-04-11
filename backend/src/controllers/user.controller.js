@@ -54,7 +54,8 @@ export async function sendFriendRequest(req, res) {
     }
 
     // check if user is already friends
-    if (recipient.friends.includes(myId)) {
+    const isAlreadyFriend = recipient.friends.some((friendId) => friendId.toString() === myId);
+    if (isAlreadyFriend) {
       return res.status(400).json({ message: "You are already friends with this user" });
     }
 
